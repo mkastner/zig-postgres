@@ -74,7 +74,7 @@ pub const Pg = struct {
                         const struct_fields = @typeInfo(@TypeOf(child)).Struct.fields;
                         const is_extended = @hasDecl(@TypeOf(child), "onSave");
 
-                        inline for (struct_fields) |field, index| {
+                        inline for (struct_fields) |field| {
                             const field_type_info = @typeInfo(field.field_type);
                             const field_value = @field(child, field.name);
 
@@ -96,7 +96,7 @@ pub const Pg = struct {
 
                     _ = builder.table(helpers.toLowerCase(struct_name.len, struct_name)[0..]);
 
-                    inline for (struct_info.fields) |field, index| {
+                    inline for (struct_info.fields) |field| {
                         const field_type_info = @typeInfo(field.field_type);
                         const field_value = @field(data, field.name);
                         if (field_type_info == .Optional) {
@@ -115,7 +115,7 @@ pub const Pg = struct {
                 const is_extended = @hasDecl(@TypeOf(data), "onSave");
 
                 _ = builder.table(helpers.toLowerCase(struct_name.len, struct_name)[0..]);
-                inline for (struct_info.fields) |field, index| {
+                inline for (struct_info.fields) |field| {
                     const field_type_info = @typeInfo(field.field_type);
                     const field_value = @field(data, field.name);
 

@@ -80,7 +80,7 @@ pub const Result = struct {
         var col_id: usize = 0;
         while (col_id < self.columns) : (col_id += 1) {
             const column_name = self.columnName(col_id);
-            const column_type = self.getType(col_id);
+            _ = self.getType(col_id);
             const value: []const u8 = self.getValue(self.active_row, col_id);
             if (value.len == 0) break;
 

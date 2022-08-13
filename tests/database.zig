@@ -108,7 +108,7 @@ const Player = struct {
     stats: Stats,
     cards: ?[][]const u8 = null,
 
-    pub fn onSave(self: *Player, comptime field: FieldInfo, builder: *Builder, value: anytype) !void {
+    pub fn onSave(_: *Player, comptime field: FieldInfo, builder: *Builder, value: anytype) !void {
         switch (field.type) {
             ?[][]const u8 => try builder.addStringArray(value.?),
             Stats => try builder.addJson(value),

@@ -4,10 +4,10 @@ const testing = std.testing;
 
 test "builder" {
     var temp_memory = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    const allocator = &temp_memory.allocator;
+    var allocator = temp_memory.allocator();
     defer temp_memory.deinit();
 
-    var builder = Builder.new(.Insert, allocator).table("test");
+    var builder = Builder.new(.Insert, &allocator).table("test");
 
     try builder.addColumn("id");
     try builder.addColumn("name");
@@ -18,11 +18,11 @@ test "builder" {
     try builder.addValue("3");
     try builder.end();
 
-    testing.expectEqualStrings("INSERT INTO test (id,name,age) VALUES (5,'Test',3);", builder.command());
+    try testing.expectEqualStrings("INSERT INTO test (id,name,age) VALUES (5,'Test',3);", builder.command());
 
     builder.deinit();
 
-    var builder2 = Builder.new(.Insert, allocator).table("test");
+    var builder2 = Builder.new(.Insert, &allocator).table("test");
 
     try builder2.addColumn("id");
     try builder2.addColumn("name");
@@ -41,10 +41,10 @@ test "builder" {
     try builder2.addValue("53");
     try builder2.end();
 
-    testing.expectEqualStrings("INSERT INTO test (id,name,age) VALUES (5,'Test',3),(1,'Test2',53),(3,'Test3',53);", builder2.command());
+    try testing.expectEqualStrings("INSERT INTO test (id,name,age) VALUES (5,'Test',3),(1,'Test2',53),(3,'Test3',53);", builder2.command());
     builder2.deinit();
 
-    var builder3 = Builder.new(.Update, allocator).table("test").where(try Builder.buildQuery("WHERE NAME = {s};", .{"Steve"}, allocator));
+    var builder3 = Builder.new(.Update, &allocator).table("test").where(try Builder.buildQuery("WHERE NAME = {s};", .{"Steve"}, &allocator));
 
     try builder3.addColumn("id");
     try builder3.addColumn("name");
@@ -56,6 +56,6 @@ test "builder" {
 
     try builder3.end();
 
-    testing.expectEqualStrings("UPDATE test SET id=5,name='Test',age=3 WHERE NAME = 'Steve';", builder3.command());
+    try testing.expectEqualStrings("UPDATE test SET id=5,name='Test',age=3 WHERE NAME = 'Steve';", builder3.command());
     builder3.deinit();
 }

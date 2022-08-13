@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const print = std.debug.print;
+const print = std.log.info;
 const ArrayList = std.ArrayList;
 const Allocator = std.mem.Allocator;
 const helpers = @import("./helpers.zig");
@@ -22,9 +22,9 @@ pub const Builder = struct {
 
     pub fn new(build_type: SQL, allocator: *Allocator) Builder {
         return Builder{
-            .buffer = ArrayList(u8).init(allocator),
-            .columns = ArrayList([]const u8).init(allocator),
-            .values = ArrayList([]const u8).init(allocator),
+            .buffer = ArrayList(u8).init(allocator.*),
+            .columns = ArrayList([]const u8).init(allocator.*),
+            .values = ArrayList([]const u8).init(allocator.*),
             .allocator = allocator,
             .build_type = build_type,
         };
@@ -45,11 +45,11 @@ pub const Builder = struct {
     }
 
     pub fn addIntValue(self: *Builder, value: anytype) !void {
-        try self.values.append(try std.fmt.allocPrint(self.allocator, "{d}", .{value}));
+        try self.values.append(try std.fmt.allocPrint(self.allocator.*, "{d}", .{value}));
     }
 
     pub fn addStringValue(self: *Builder, value: []const u8) !void {
-        try self.values.append(try std.fmt.allocPrint(self.allocator, "'{s}'", .{value}));
+        try self.values.append(try std.fmt.allocPrint(self.allocator.*, "'{s}'", .{value}));
     }
 
     pub fn addValue(self: *Builder, value: anytype) !void {
@@ -61,7 +61,7 @@ pub const Builder = struct {
                 try self.addStringValue(value);
             },
             else => {
-                const int: ?u32 = std.fmt.parseInt(u32, value, 10) catch |err| null;
+                const int: ?u32 = std.fmt.parseInt(u32, value, 10) catch null;
                 if (int != null) {
                     try self.addIntValue(int.?);
                 } else {
@@ -74,7 +74,7 @@ pub const Builder = struct {
     pub fn addStringArray(self: *Builder, values: [][]const u8) !void {
         _ = try self.buffer.writer().write("ARRAY[");
         for (values) |entry, i| _ = {
-            _ = try self.buffer.writer().write(try std.fmt.allocPrint(self.allocator, "'{s}'", .{entry}));
+            _ = try self.buffer.writer().write(try std.fmt.allocPrint(self.allocator.*, "'{s}'", .{entry}));
             if (i < values.len - 1) _ = try self.buffer.writer().write(",");
         };
         _ = try self.buffer.writer().write("]");
@@ -151,12 +151,12 @@ pub const Builder = struct {
             },
             .Update => {
                 if (self.columns.items.len != self.values.items.len) {
-                    std.debug.warn("Columns and Values must match in length \n", .{});
+                    std.log.warn("Columns and Values must match in length \n", .{});
                     return Error.QueryFailure;
                 }
 
                 if (self.where_clause == null) {
-                    std.debug.warn("Where clause must be set \n", .{});
+                    std.log.warn("Where clause must be set \n", .{});
                     return Error.QueryFailure;
                 }
 
@@ -229,7 +229,7 @@ pub const Builder = struct {
 
         var parsed_values: @Type(values_info) = undefined;
 
-        inline for (std.meta.fields(@TypeOf(parsed_values))) |field, index| {
+        inline for (std.meta.fields(@TypeOf(parsed_values))) |field| {
             const value = @field(values, field.name);
 
             switch (field.field_type) {
@@ -241,10 +241,10 @@ pub const Builder = struct {
                     @field(parsed_values, field.name) = @as(i32, value);
                 },
                 else => {
-                    @field(parsed_values, field.name) = try std.fmt.allocPrint(allocator, "'{s}'", .{value});
+                    @field(parsed_values, field.name) = try std.fmt.allocPrint(allocator.*, "'{s}'", .{value});
                 },
             }
         }
-        return try std.fmt.allocPrint(allocator, query, parsed_values);
+        return try std.fmt.allocPrint(allocator.*, query, parsed_values);
     }
 };

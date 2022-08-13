@@ -1,4 +1,6 @@
-const Builder = @import("std").build.Builder;
+const std = @import("std");
+const Builder = std.build.Builder;
+const OptionsStep = std.build.OptionsStep;
 
 const examples = [2][]const u8{ "main", "custom_types" };
 
@@ -10,13 +12,15 @@ pub fn build(b: *Builder) void {
         []const u8,
         "db",
         "Specify the database url",
-    ) orelse "postgresql://root@tonis-xps:26257?sslmode=disable";
+    ) orelse "postgresql://postgres:postgres@localhost:5432";
 
     inline for (examples) |example| {
         const exe = b.addExecutable(example, "examples/" ++ example ++ ".zig");
         exe.setTarget(target);
         exe.setBuildMode(mode);
-        exe.addBuildOption([]const u8, "db_uri", db_uri);
+        const db_options = b.addOptions();
+        exe.addOptions("db_options", db_options);
+        db_options.addOption([]const u8, "db_uri", db_uri);
 
         exe.addPackagePath("postgres", "src/postgres.zig");
         exe.linkSystemLibrary("c");
@@ -37,7 +41,9 @@ pub fn build(b: *Builder) void {
     tests.linkSystemLibrary("c");
     tests.linkSystemLibrary("libpq");
     tests.addPackagePath("postgres", "src/postgres.zig");
-    tests.addBuildOption([]const u8, "db_uri", db_uri);
+    const db_options = b.addOptions();
+    tests.addOptions("db_options", db_options);
+    db_options.addOption([]const u8, "db_uri", db_uri);
 
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&tests.step);
