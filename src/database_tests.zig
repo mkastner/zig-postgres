@@ -12,7 +12,7 @@ const testing = std.testing;
 const Allocator = std.mem.Allocator;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = &gpa.allocator;
+const allocator = gpa.allocator();
 
 const Users = struct {
     id: u16,
@@ -21,7 +21,7 @@ const Users = struct {
 };
 
 test "database" {
-    var db = try Pg.connect(allocator, build_options.db_uri);
+    var db = try Pg.connect(std.testing.allocator, build_options.db_uri);
     defer db.deinit();
     const schema =
         \\CREATE DATABASE IF NOT EXISTS root;
@@ -60,17 +60,10 @@ test "database" {
 
     while (result3.parse(Users, null)) |res| testing.expectEqual(res.age, 25);
 
-    //Temp memory
-    var temp_memory = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    const temp_allocator = &temp_memory.allocator;
-
     //SQL query builder
-    var builder = Builder.new(.Update, temp_allocator).table("users").where(try Builder.buildQuery("WHERE id = {d};", .{2}, temp_allocator));
+    var builder = Builder.new(.Update, std.testing.allocator).table("users").where(try Builder.buildQuery("WHERE id = {d};", .{2}, std.testing.allocator));
 
-    defer {
-        builder.deinit();
-        temp_memory.deinit();
-    }
+    defer builder.deinit();
 
     try builder.addColumn("name");
     try builder.addValue("Harold");
@@ -126,7 +119,7 @@ const Player = struct {
 };
 
 test "Custom types" {
-    var db = try Pg.connect(allocator, build_options.db_uri);
+    var db = try Pg.connect(std.testing.allocator, build_options.db_uri);
 
     defer {
         std.debug.assert(!gpa.deinit());
@@ -150,7 +143,7 @@ test "Custom types" {
     _ = try db.insert(&data);
 
     var result = try db.execValues("SELECT * FROM player WHERE name = {s}", .{"Steve"});
-    var data_cache = result.parse(Player, allocator).?;
+    var data_cache = result.parse(Player, std.testing.allocator).?;
 
     testing.expectEqual(data_cache.id, 2);
     testing.expectEqualStrings(data_cache.name, "Steve");
@@ -158,7 +151,7 @@ test "Custom types" {
     testing.expectEqual(data_cache.stats.losses, 3);
 
     //Free cards allocation
-    defer allocator.free(data_cache.cards.?);
+    defer std.testing.allocator.free(data_cache.cards.?);
 
     _ = try db.exec("DROP TABLE player");
 }
@@ -169,7 +162,7 @@ const KeyValue = struct {
 };
 
 test "Nullable type" {
-    var db = try Pg.connect(allocator, build_options.db_uri);
+    var db = try Pg.connect(std.testing.allocator, build_options.db_uri);
 
     defer {
         std.debug.assert(!gpa.deinit());

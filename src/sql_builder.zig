@@ -17,14 +17,14 @@ pub const Builder = struct {
     buffer: ArrayList(u8),
     columns: ArrayList([]const u8),
     values: ArrayList([]const u8),
-    allocator: *Allocator,
+    allocator: Allocator,
     build_type: SQL,
 
-    pub fn new(build_type: SQL, allocator: *Allocator) Builder {
+    pub fn new(build_type: SQL, allocator: Allocator) Builder {
         return Builder{
-            .buffer = ArrayList(u8).init(allocator.*),
-            .columns = ArrayList([]const u8).init(allocator.*),
-            .values = ArrayList([]const u8).init(allocator.*),
+            .buffer = ArrayList(u8).init(allocator),
+            .columns = ArrayList([]const u8).init(allocator),
+            .values = ArrayList([]const u8).init(allocator),
             .allocator = allocator,
             .build_type = build_type,
         };
@@ -45,11 +45,11 @@ pub const Builder = struct {
     }
 
     pub fn addIntValue(self: *Builder, value: anytype) !void {
-        try self.values.append(try std.fmt.allocPrint(self.allocator.*, "{d}", .{value}));
+        try self.values.append(try std.fmt.allocPrint(self.allocator, "{d}", .{value}));
     }
 
     pub fn addStringValue(self: *Builder, value: []const u8) !void {
-        try self.values.append(try std.fmt.allocPrint(self.allocator.*, "'{s}'", .{value}));
+        try self.values.append(try std.fmt.allocPrint(self.allocator, "'{s}'", .{value}));
     }
 
     pub fn addValue(self: *Builder, value: anytype) !void {
@@ -74,7 +74,7 @@ pub const Builder = struct {
     pub fn addStringArray(self: *Builder, values: [][]const u8) !void {
         _ = try self.buffer.writer().write("ARRAY[");
         for (values) |entry, i| _ = {
-            _ = try self.buffer.writer().write(try std.fmt.allocPrint(self.allocator.*, "'{s}'", .{entry}));
+            _ = try self.buffer.writer().write(try std.fmt.allocPrint(self.allocator, "'{s}'", .{entry}));
             if (i < values.len - 1) _ = try self.buffer.writer().write(",");
         };
         _ = try self.buffer.writer().write("]");
@@ -199,7 +199,7 @@ pub const Builder = struct {
     }
 
     //Build query string for executing in sql
-    pub fn buildQuery(comptime query: []const u8, values: anytype, allocator: *Allocator) ![]const u8 {
+    pub fn buildQuery(comptime query: []const u8, values: anytype, allocator: Allocator) ![]const u8 {
         comptime var values_info = @typeInfo(@TypeOf(values));
         comptime var temp_fields: [values_info.Struct.fields.len]std.builtin.TypeInfo.StructField = undefined;
 
@@ -241,10 +241,66 @@ pub const Builder = struct {
                     @field(parsed_values, field.name) = @as(i32, value);
                 },
                 else => {
-                    @field(parsed_values, field.name) = try std.fmt.allocPrint(allocator.*, "'{s}'", .{value});
+                    @field(parsed_values, field.name) = try std.fmt.allocPrint(allocator, "'{s}'", .{value});
                 },
             }
         }
-        return try std.fmt.allocPrint(allocator.*, query, parsed_values);
+        return try std.fmt.allocPrint(allocator, query, parsed_values);
     }
 };
+
+const testing = std.testing;
+
+test "builder" {
+    var builder = Builder.new(.Insert, testing.allocator).table("test");
+
+    try builder.addColumn("id");
+    try builder.addColumn("name");
+    try builder.addColumn("age");
+
+    try builder.addValue("5");
+    try builder.addValue("Test");
+    try builder.addValue("3");
+    try builder.end();
+
+    try testing.expectEqualStrings("INSERT INTO test (id,name,age) VALUES (5,'Test',3);", builder.command());
+
+    builder.deinit();
+
+    var builder2 = Builder.new(.Insert, testing.allocator).table("test");
+
+    try builder2.addColumn("id");
+    try builder2.addColumn("name");
+    try builder2.addColumn("age");
+
+    try builder2.addValue("5");
+    try builder2.addValue("Test");
+    try builder2.addValue("3");
+
+    try builder2.addValue("1");
+    try builder2.addValue("Test2");
+    try builder2.addValue("53");
+
+    try builder2.addValue("3");
+    try builder2.addValue("Test3");
+    try builder2.addValue("53");
+    try builder2.end();
+
+    try testing.expectEqualStrings("INSERT INTO test (id,name,age) VALUES (5,'Test',3),(1,'Test2',53),(3,'Test3',53);", builder2.command());
+    builder2.deinit();
+
+    var builder3 = Builder.new(.Update, testing.allocator).table("test").where(try Builder.buildQuery("WHERE NAME = {s};", .{"Steve"}, testing.allocator));
+
+    try builder3.addColumn("id");
+    try builder3.addColumn("name");
+    try builder3.addColumn("age");
+
+    try builder3.addValue("5");
+    try builder3.addValue("Test");
+    try builder3.addValue("3");
+
+    try builder3.end();
+
+    try testing.expectEqualStrings("UPDATE test SET id=5,name='Test',age=3 WHERE NAME = 'Steve';", builder3.command());
+    builder3.deinit();
+}

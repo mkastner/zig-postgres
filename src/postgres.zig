@@ -24,9 +24,9 @@ pub const Pg = struct {
     const Self = @This();
 
     connection: *c.PGconn,
-    allocator: *std.mem.Allocator,
+    allocator: std.mem.Allocator,
 
-    pub fn connect(allocator: *std.mem.Allocator, address: []const u8) !Self {
+    pub fn connect(allocator: std.mem.Allocator, address: []const u8) !Self {
         var conn_info = try std.cstr.addNullByte(allocator, address);
         var connection: *c.PGconn = undefined;
 
@@ -36,7 +36,7 @@ pub const Pg = struct {
             connection = conn;
         }
 
-        if (@enumToInt(c.PQstatus(connection)) != c.CONNECTION_OK) {
+        if (c.PQstatus(connection) != c.CONNECTION_OK) {
             return Error.ConnectionFailure;
         }
 
@@ -48,7 +48,7 @@ pub const Pg = struct {
 
     pub fn insert(self: Self, data: anytype) !Result {
         var temp_memory = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-        const allocator = &temp_memory.allocator;
+        var allocator = temp_memory.allocator();
 
         var builder = Builder.new(.Insert, allocator);
         const type_info = @typeInfo(@TypeOf(data));
@@ -160,7 +160,7 @@ pub const Pg = struct {
         var temp_memory = std.heap.ArenaAllocator.init(std.heap.page_allocator);
         defer temp_memory.deinit();
 
-        const allocator = &temp_memory.allocator;
+        const allocator = temp_memory.allocator();
 
         return self.exec(try Builder.buildQuery(query, values, allocator));
     }

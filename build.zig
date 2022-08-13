@@ -1,8 +1,15 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const Builder = std.build.Builder;
 const OptionsStep = std.build.OptionsStep;
 
 const examples = [2][]const u8{ "main", "custom_types" };
+
+const include_dir = switch (builtin.target.os.tag) {
+    .linux => "/usr/include",
+    .windows => "C:\\Program Files\\PostgreSQL\\14\\include",
+    else => "/usr/include"
+};
 
 pub fn build(b: *Builder) void {
     const target = b.standardTargetOptions(.{});
@@ -22,6 +29,7 @@ pub fn build(b: *Builder) void {
         exe.addOptions("db_options", db_options);
         db_options.addOption([]const u8, "db_uri", db_uri);
 
+        exe.addIncludeDir(include_dir);
         exe.addPackagePath("postgres", "src/postgres.zig");
         exe.linkSystemLibrary("c");
         exe.linkSystemLibrary("libpq");
@@ -35,15 +43,25 @@ pub fn build(b: *Builder) void {
         run_step.dependOn(&run_cmd.step);
     }
 
+    const lib = b.addStaticLibrary("zig-postgres", "src/postgres.zig");
+    lib.setTarget(target);
+    lib.setBuildMode(mode);
+    const db_options = b.addOptions();
+    lib.addOptions("db_options", db_options);
+    db_options.addOption([]const u8, "db_uri", db_uri);
+
+    lib.addIncludeDir(include_dir);
+    lib.linkSystemLibrary("c");
+    lib.linkSystemLibrary("libpq");
+
     const tests = b.addTest("tests.zig");
     tests.setBuildMode(mode);
     tests.setTarget(target);
+    tests.addIncludeDir(include_dir);
     tests.linkSystemLibrary("c");
     tests.linkSystemLibrary("libpq");
     tests.addPackagePath("postgres", "src/postgres.zig");
-    const db_options = b.addOptions();
     tests.addOptions("db_options", db_options);
-    db_options.addOption([]const u8, "db_uri", db_uri);
 
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&tests.step);
