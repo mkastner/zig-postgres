@@ -21,7 +21,7 @@ const Users = struct {
 };
 
 test "database" {
-    var db = try Pg.connect(std.testing.allocator, build_options.db_uri);
+    var db = try Pg.connect(std.testing.allocator, "postgresql://root@postgresURL:26257?sslmode=disable");
     defer db.deinit();
     const schema =
         \\CREATE DATABASE IF NOT EXISTS root;
@@ -119,7 +119,7 @@ const Player = struct {
 };
 
 test "Custom types" {
-    var db = try Pg.connect(std.testing.allocator, build_options.db_uri);
+    var db = try Pg.connect(std.testing.allocator, "postgresql://root@postgresURL:26257?sslmode=disable");
 
     defer {
         std.debug.assert(!gpa.deinit());
@@ -162,7 +162,7 @@ const KeyValue = struct {
 };
 
 test "Nullable type" {
-    var db = try Pg.connect(std.testing.allocator, build_options.db_uri);
+    var db = try Pg.connect(std.testing.allocator, "postgresql://root@postgresURL:26257?sslmode=disable");
 
     defer {
         std.debug.assert(!gpa.deinit());

@@ -41,7 +41,7 @@ const Player = struct {
 };
 
 pub fn main() !void {
-    var db = try Pg.connect(allocator, build_options.db_uri);
+    var db = try Pg.connect(allocator, "postgresql://root@postgresURL:26257?sslmode=disable");
 
     defer {
         std.debug.assert(!gpa.deinit());
