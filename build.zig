@@ -15,6 +15,7 @@ const include_dir = switch (builtin.target.os.tag) {
 pub fn build(b: *Builder) void {
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
+    b.addSearchPrefix("/opt/homebrew/opt/libpq");
 
     const db_uri = b.option(
         []const u8,
@@ -33,7 +34,7 @@ pub fn build(b: *Builder) void {
         exe.addIncludePath(include_dir);
         exe.addPackagePath("postgres", "src/postgres.zig");
         exe.linkSystemLibrary("c");
-        exe.linkSystemLibrary("libpq");
+        exe.linkSystemLibrary("pq");
 
         exe.install();
 
@@ -53,14 +54,14 @@ pub fn build(b: *Builder) void {
 
     lib.addIncludePath(include_dir);
     lib.linkSystemLibrary("c");
-    lib.linkSystemLibrary("libpq");
+    lib.linkSystemLibrary("pq");
 
     const tests = b.addTest("tests.zig");
     tests.setBuildMode(mode);
     tests.setTarget(target);
     tests.addIncludePath(include_dir);
     tests.linkSystemLibrary("c");
-    tests.linkSystemLibrary("libpq");
+    tests.linkSystemLibrary("pq");
     tests.addPackagePath("postgres", "src/postgres.zig");
     tests.addOptions("db_options", db_options);
 

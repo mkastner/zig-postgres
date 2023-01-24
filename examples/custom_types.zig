@@ -13,7 +13,7 @@ const ArrayList = std.ArrayList;
 const Allocator = std.mem.Allocator;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = &gpa.allocator;
+const allocator = gpa.allocator();
 
 const Stats = struct { wins: u16 = 0, losses: u16 = 0 };
 const Player = struct {
@@ -23,6 +23,7 @@ const Player = struct {
     cards: ?[][]const u8 = null,
 
     pub fn onSave(self: *Player, comptime field: FieldInfo, builder: *Builder, value: anytype) !void {
+        _ = self;
         switch (field.type) {
             ?[][]const u8 => try builder.addStringArray(value.?),
             Stats => try builder.addJson(value),
