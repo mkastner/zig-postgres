@@ -86,24 +86,24 @@ pub const Result = struct {
 
             inline for (struct_fields) |field| {
                 if (std.mem.eql(u8, field.name, column_name)) {
-                    switch (field.field_type) {
+                    switch (field.type) {
                         ?u8,
                         ?u16,
                         ?u32,
                         => {
-                            @field(result, field.name) = std.fmt.parseUnsigned(@typeInfo(field.field_type).Optional.child, value, 10) catch unreachable;
+                            @field(result, field.name) = std.fmt.parseUnsigned(@typeInfo(field.type).Optional.child, value, 10) catch unreachable;
                         },
                         u8, u16, u32, usize => {
-                            @field(result, field.name) = std.fmt.parseUnsigned(field.field_type, value, 10) catch unreachable;
+                            @field(result, field.name) = std.fmt.parseUnsigned(field.type, value, 10) catch unreachable;
                         },
                         ?i8,
                         ?i16,
                         ?i32,
                         => {
-                            @field(result, field.name) = std.fmt.parseInt(@typeInfo(field.field_type).Optional.child, value, 10) catch unreachable;
+                            @field(result, field.name) = std.fmt.parseInt(@typeInfo(field.type).Optional.child, value, 10) catch unreachable;
                         },
                         i8, i16, i32 => {
-                            @field(result, field.name) = std.fmt.parseInt(field.field_type, value, 10) catch unreachable;
+                            @field(result, field.name) = std.fmt.parseInt(field.type, value, 10) catch unreachable;
                         },
                         []const u8, ?[]const u8 => {
                             @field(result, field.name) = value;
@@ -111,7 +111,7 @@ pub const Result = struct {
                         else => {
                             const is_extended = @hasDecl(return_type, "onLoad");
 
-                            if (is_extended) @field(result, "onLoad")(FieldInfo{ .name = field.name, .type = field.field_type }, value, Parser.init(allocator.?)) catch unreachable;
+                            if (is_extended) @field(result, "onLoad")(FieldInfo{ .name = field.name, .type = field.type }, value, Parser.init(allocator.?)) catch unreachable;
                         },
                     }
                 }

@@ -8,7 +8,8 @@ const examples = [2][]const u8{ "main", "custom_types" };
 const include_dir = switch (builtin.target.os.tag) {
     .linux => "/usr/include",
     .windows => "C:\\Program Files\\PostgreSQL\\14\\include",
-    else => "/usr/include"
+    .macos => "/opt/homebrew/Cellar/libpq/15.1/include",
+    else => "/usr/include",
 };
 
 pub fn build(b: *Builder) void {
@@ -29,7 +30,7 @@ pub fn build(b: *Builder) void {
         exe.addOptions("db_options", db_options);
         db_options.addOption([]const u8, "db_uri", db_uri);
 
-        exe.addIncludeDir(include_dir);
+        exe.addIncludePath(include_dir);
         exe.addPackagePath("postgres", "src/postgres.zig");
         exe.linkSystemLibrary("c");
         exe.linkSystemLibrary("libpq");
@@ -50,14 +51,14 @@ pub fn build(b: *Builder) void {
     lib.addOptions("db_options", db_options);
     db_options.addOption([]const u8, "db_uri", db_uri);
 
-    lib.addIncludeDir(include_dir);
+    lib.addIncludePath(include_dir);
     lib.linkSystemLibrary("c");
     lib.linkSystemLibrary("libpq");
 
     const tests = b.addTest("tests.zig");
     tests.setBuildMode(mode);
     tests.setTarget(target);
-    tests.addIncludeDir(include_dir);
+    tests.addIncludePath(include_dir);
     tests.linkSystemLibrary("c");
     tests.linkSystemLibrary("libpq");
     tests.addPackagePath("postgres", "src/postgres.zig");

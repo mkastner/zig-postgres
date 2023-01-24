@@ -201,26 +201,26 @@ pub const Builder = struct {
     //Build query string for executing in sql
     pub fn buildQuery(comptime query: []const u8, values: anytype, allocator: Allocator) ![]const u8 {
         comptime var values_info = @typeInfo(@TypeOf(values));
-        comptime var temp_fields: [values_info.Struct.fields.len]std.builtin.TypeInfo.StructField = undefined;
+        comptime var temp_fields: [values_info.Struct.fields.len]std.builtin.Type.StructField = undefined;
 
         inline for (values_info.Struct.fields) |field, index| {
-            switch (field.field_type) {
+            switch (field.type) {
                 i16, i32, u8, u16, u32, usize, comptime_int => {
-                    temp_fields[index] = std.builtin.TypeInfo.StructField{
+                    temp_fields[index] = std.builtin.Type.StructField{
                         .name = field.name,
-                        .field_type = i32,
+                        .type = i32,
                         .default_value = null,
                         .is_comptime = false,
-                        .alignment = if (@sizeOf(field.field_type) > 0) @alignOf(field.field_type) else 0,
+                        .alignment = if (@sizeOf(field.type) > 0) @alignOf(field.type) else 0,
                     };
                 },
                 else => {
-                    temp_fields[index] = std.builtin.TypeInfo.StructField{
+                    temp_fields[index] = std.builtin.Type.StructField{
                         .name = field.name,
-                        .field_type = []const u8,
+                        .type = []const u8,
                         .default_value = null,
                         .is_comptime = false,
-                        .alignment = if (@sizeOf(field.field_type) > 0) @alignOf(field.field_type) else 0,
+                        .alignment = if (@sizeOf(field.type) > 0) @alignOf(field.type) else 0,
                     };
                 },
             }
@@ -232,7 +232,7 @@ pub const Builder = struct {
         inline for (std.meta.fields(@TypeOf(parsed_values))) |field| {
             const value = @field(values, field.name);
 
-            switch (field.field_type) {
+            switch (field.type) {
                 comptime_int => {
                     @field(parsed_values, field.name) = @intCast(i32, value);
                     return;

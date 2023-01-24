@@ -75,7 +75,7 @@ pub const Pg = struct {
                         const is_extended = @hasDecl(@TypeOf(child), "onSave");
 
                         inline for (struct_fields) |field| {
-                            const field_type_info = @typeInfo(field.field_type);
+                            const field_type_info = @typeInfo(field.type);
                             const field_value = @field(child, field.name);
 
                             //Add first child struct keys as column value
@@ -84,7 +84,7 @@ pub const Pg = struct {
                             } else if (child_index == 0) {
                                 try builder.addColumn(field.name);
                             }
-                            builder.autoAdd(child, FieldInfo{ .name = field.name, .type = field.field_type }, field_value, is_extended) catch unreachable;
+                            builder.autoAdd(child, FieldInfo{ .name = field.name, .type = field.type }, field_value, is_extended) catch unreachable;
                         }
                     }
                 }
@@ -97,7 +97,7 @@ pub const Pg = struct {
                     _ = builder.table(helpers.toLowerCase(struct_name.len, struct_name)[0..]);
 
                     inline for (struct_info.fields) |field| {
-                        const field_type_info = @typeInfo(field.field_type);
+                        const field_type_info = @typeInfo(field.type);
                         const field_value = @field(data, field.name);
                         if (field_type_info == .Optional) {
                             if (field_value != null) try builder.addColumn(field.name);
@@ -105,7 +105,7 @@ pub const Pg = struct {
                             try builder.addColumn(field.name);
                         }
 
-                        builder.autoAdd(data, FieldInfo{ .name = field.name, .type = field.field_type }, field_value, is_extended) catch unreachable;
+                        builder.autoAdd(data, FieldInfo{ .name = field.name, .type = field.type }, field_value, is_extended) catch unreachable;
                     }
                 }
             },
@@ -116,7 +116,7 @@ pub const Pg = struct {
 
                 _ = builder.table(helpers.toLowerCase(struct_name.len, struct_name)[0..]);
                 inline for (struct_info.fields) |field| {
-                    const field_type_info = @typeInfo(field.field_type);
+                    const field_type_info = @typeInfo(field.type);
                     const field_value = @field(data, field.name);
 
                     if (field_type_info == .Optional) {
@@ -125,7 +125,7 @@ pub const Pg = struct {
                         try builder.addColumn(field.name);
                     }
 
-                    builder.autoAdd(data, FieldInfo{ .name = field.name, .type = field.field_type }, field_value, is_extended) catch unreachable;
+                    builder.autoAdd(data, FieldInfo{ .name = field.name, .type = field.type }, field_value, is_extended) catch unreachable;
                 }
             },
             else => {},
@@ -141,10 +141,11 @@ pub const Pg = struct {
         defer self.allocator.free(cstr_query);
 
         var res: ?*c.PGresult = c.PQexec(self.connection, cstr_query);
-        var response_code = @enumToInt(c.PQresultStatus(res));
+        // var response_code = @enumToInt(c.PQresultStatus(res));
+        var response_code = c.PQresultStatus(res);
 
         if (response_code != c.PGRES_TUPLES_OK and response_code != c.PGRES_COMMAND_OK and response_code != c.PGRES_NONFATAL_ERROR) {
-            std.debug.warn("Error {s}\n", .{c.PQresultErrorMessage(res)});
+            std.debug.print("Error {s}\n", .{c.PQresultErrorMessage(res)});
             c.PQclear(res);
             return Error.QueryFailure;
         }
