@@ -1,6 +1,6 @@
 const std = @import("std");
 const print = std.debug.print;
-// const build_options = @import("build_options");
+const build_options = @import("build_options");
 
 const Postgres = @import("postgres");
 const Pg = Postgres.Pg;
@@ -21,7 +21,7 @@ const Users = struct {
 };
 
 pub fn main() !void {
-    var db = try Pg.connect(allocator, "postgresql://postgres:postgres@localhost:5432");
+    var db = try Pg.connect(allocator, build_options.db_uri);
 
     defer {
         std.debug.assert(!gpa.deinit());

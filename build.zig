@@ -28,7 +28,7 @@ pub fn build(b: *Builder) void {
         exe.setTarget(target);
         exe.setBuildMode(mode);
         const db_options = b.addOptions();
-        exe.addOptions("db_options", db_options);
+        exe.addOptions("build_options", db_options);
         db_options.addOption([]const u8, "db_uri", db_uri);
 
         exe.addIncludePath(include_dir);
@@ -49,7 +49,7 @@ pub fn build(b: *Builder) void {
     lib.setTarget(target);
     lib.setBuildMode(mode);
     const db_options = b.addOptions();
-    lib.addOptions("db_options", db_options);
+    lib.addOptions("build_options", db_options);
     db_options.addOption([]const u8, "db_uri", db_uri);
 
     lib.addIncludePath(include_dir);
@@ -63,7 +63,7 @@ pub fn build(b: *Builder) void {
     tests.linkSystemLibrary("c");
     tests.linkSystemLibrary("pq");
     tests.addPackagePath("postgres", "src/postgres.zig");
-    tests.addOptions("db_options", db_options);
+    tests.addOptions("build_options", db_options);
 
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&tests.step);
