@@ -78,16 +78,19 @@ pub const Builder = struct {
             if (i < values.len - 1) _ = try self.buffer.writer().write(",");
         };
         _ = try self.buffer.writer().write("]");
-        try self.values.append(self.buffer.toOwnedSlice());
+        const s = try self.buffer.toOwnedSlice();
+        try self.values.append(s);
     }
 
     pub fn addJson(self: *Builder, data: anytype) !void {
         _ = try self.buffer.writer().write("('");
         var buffer = std.ArrayList(u8).init(self.allocator);
         try std.json.stringify(data, .{}, buffer.writer());
-        _ = try self.buffer.writer().write(buffer.toOwnedSlice());
+        const s = try buffer.toOwnedSlice();
+        _ = try self.buffer.writer().write(s);
         _ = try self.buffer.writer().write("')");
-        _ = try self.values.append(self.buffer.toOwnedSlice());
+        const s2 = try self.buffer.toOwnedSlice();
+        _ = try self.values.append(s2);
     }
 
     pub fn autoAdd(self: *Builder, struct_info: anytype, comptime field_info: FieldInfo, field_value: anytype, comptime extended: bool) !void {

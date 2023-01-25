@@ -63,7 +63,7 @@ pub const Result = struct {
     }
 
     //Parses and returns struct with values
-    pub fn parse(self: *Result, comptime return_type: type, allocator: ?*Allocator) ?return_type {
+    pub fn parse(self: *Result, comptime return_type: type, allocator: std.mem.Allocator) ?return_type {
         if (self.rows < 1) return null;
         if (self.active_row == self.rows) return null;
 
@@ -111,7 +111,7 @@ pub const Result = struct {
                         else => {
                             const is_extended = @hasDecl(return_type, "onLoad");
 
-                            if (is_extended) @field(result, "onLoad")(FieldInfo{ .name = field.name, .type = field.type }, value, Parser.init(allocator.?)) catch unreachable;
+                            if (is_extended) @field(result, "onLoad")(FieldInfo{ .name = field.name, .type = field.type }, value, Parser.init(allocator)) catch unreachable;
                         },
                     }
                 }
