@@ -8,18 +8,21 @@ const Self = @This();
 // allocator: *Allocator = allocator,
 
 pub fn init(allocator: Allocator) Self {
+    _ = allocator;
     return Self{
-        .allocator = allocator,
+        // .allocator = allocator,
     };
 }
 
 pub fn parseJson(self: *const Self, comptime T: type, value: []const u8, allocator: Allocator) !T {
     _ = self;
-    return try std.json.parse(T, &std.json.TokenStream.init(value), .{ .allocator = allocator });
+    var stream = std.json.TokenStream.init(value);
+    return try std.json.parse(T, &stream, .{ .allocator = allocator });
 }
 
-pub fn parseArray(self: *const Self, value: []const u8, break_point: []const u8) ![][]const u8 {
-    var buffer = std.ArrayList([]const u8).init(self.allocator);
+pub fn parseArray(self: *const Self, value: []const u8, break_point: []const u8, allocator: Allocator) ![][]const u8 {
+    _ = self;
+    var buffer = std.ArrayList([]const u8).init(allocator);
 
     var stop_point: usize = try std.math.divCeil(usize, break_point.len, 2);
     for (value) |_, index| {
