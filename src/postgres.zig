@@ -116,7 +116,9 @@ pub const Pg = struct {
                 const struct_name = @typeName(@TypeOf(data));
                 const is_extended = @hasDecl(@TypeOf(data), "onSave");
 
-                _ = builder.table(helpers.extWithoutDotLowerCase(struct_name.len, struct_name)[0..]);
+                var buf: [1024]u8 = undefined;
+                const table_name = helpers.extWithoutDotLowerCase(struct_name.len, struct_name, &buf);
+                _ = builder.table(table_name);
                 inline for (struct_info.fields) |field| {
                     const field_type_info = @typeInfo(field.type);
                     const field_value = @field(data, field.name);
@@ -130,9 +132,10 @@ pub const Pg = struct {
                     builder.autoAdd(data, FieldInfo{ .name = field.name, .type = field.type }, field_value, is_extended) catch unreachable;
                 }
             },
-            else => {},
+            else => @compileError("type " ++ @typeName(@TypeOf(data)) ++ " not supported yet"),
         }
 
+        // _ = builder.table("users");
         try builder.end();
         //Exec command
         return try self.exec(builder.command());
