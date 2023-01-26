@@ -8,6 +8,8 @@ Installing `libpg` on debian linux
 
 `sudo apt-get install libpq-dev`
 
+There is also native zig client in pre-alpha status https://github.com/star-tek-mb/pgz
+
 ## How to install
 
 ---
