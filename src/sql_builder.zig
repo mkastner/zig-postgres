@@ -31,9 +31,7 @@ pub const Builder = struct {
     }
 
     pub fn table(self: *Builder, table_name: []const u8) *Builder {
-        std.debug.print(">>>> table_name: {s}\n", .{table_name});
         self.table_name = table_name;
-        std.debug.print(">>>> self.table_name: {s}\n", .{self.table_name});
         return self;
     }
 
@@ -114,7 +112,6 @@ pub const Builder = struct {
     }
 
     pub fn end(self: *Builder) !void {
-        std.debug.print("table_name: {s}\n", .{self.table_name});
         switch (self.build_type) {
             .Insert => {
                 _ = try self.buffer.writer().write("INSERT INTO ");
@@ -190,8 +187,6 @@ pub const Builder = struct {
                 return Error.NotImplemented;
             },
         }
-
-        std.debug.print("buffer: {s}\n", .{self.buffer.items});
     }
 
     pub fn command(self: *Builder) []const u8 {

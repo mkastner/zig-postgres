@@ -21,7 +21,6 @@ const Users = struct {
 };
 
 pub fn main() !void {
-    std.debug.print("db_uri: {s}\n", .{build_options.db_uri});
     var db = try Pg.connect(allocator, build_options.db_uri);
 
     defer {
