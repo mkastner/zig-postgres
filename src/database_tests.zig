@@ -24,7 +24,7 @@ test "database" {
     var db = try Pg.connect(std.testing.allocator, build_options.db_uri);
     defer db.deinit();
     const schema =
-        \\CREATE DATABASE IF NOT EXISTS root;
+        \\CREATE DATABASE root;
         \\CREATE TABLE IF NOT EXISTS users (id INT, name TEXT, age INT);
     ;
 
@@ -127,7 +127,7 @@ test "Custom types" {
     }
 
     const schema =
-        \\CREATE DATABASE IF NOT EXISTS root;
+        \\CREATE DATABASE root;
         \\CREATE TABLE IF NOT EXISTS player (id INT, name TEXT, stats JSONB, cards STRING[]);
     ;
 
@@ -170,7 +170,7 @@ test "Nullable type" {
     }
 
     const schema =
-        \\CREATE DATABASE IF NOT EXISTS root;
+        \\CREATE DATABASE root;
         \\CREATE TABLE IF NOT EXISTS keyValue (id SERIAL PRIMARY KEY, value int);
     ;
 

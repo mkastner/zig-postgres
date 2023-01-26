@@ -21,6 +21,7 @@ const Users = struct {
 };
 
 pub fn main() !void {
+    std.debug.print("db_uri: {s}\n", .{build_options.db_uri});
     var db = try Pg.connect(allocator, build_options.db_uri);
 
     defer {
@@ -29,7 +30,7 @@ pub fn main() !void {
     }
 
     const schema =
-        \\CREATE DATABASE IF NOT EXISTS root;
+        // \\CREATE DATABASE root;
         \\CREATE TABLE IF NOT EXISTS users (id INT, name TEXT, age INT);
     ;
 

@@ -5,12 +5,13 @@ const OptionsStep = std.build.OptionsStep;
 
 const examples = [2][]const u8{ "main", "custom_types" };
 
-const include_dir = switch (builtin.target.os.tag) {
-    .linux => "/usr/include",
-    .windows => "C:\\Program Files\\PostgreSQL\\14\\include",
-    .macos => "/opt/homebrew/Cellar/libpq/15.1/include",
-    else => "/usr/include",
-};
+// const include_dir = switch (builtin.target.os.tag) {
+//     .linux => "/usr/include",
+//     .windows => "C:\\Program Files\\PostgreSQL\\14\\include",
+//     // .macos => "/opt/homebrew/Cellar/libpq/15.1/include",
+//     .macos => "/opt/homebrew/opt/libpq",
+//     else => "/usr/include",
+// };
 
 pub fn build(b: *Builder) void {
     const target = b.standardTargetOptions(.{});
@@ -21,7 +22,7 @@ pub fn build(b: *Builder) void {
         []const u8,
         "db",
         "Specify the database url",
-    ) orelse "postgresql://postgres:postgres@localhost:5432";
+    ) orelse "postgresql://postgresql:postgresql@localhost:5432";
 
     inline for (examples) |example| {
         const exe = b.addExecutable(example, "examples/" ++ example ++ ".zig");
@@ -31,7 +32,7 @@ pub fn build(b: *Builder) void {
         exe.addOptions("build_options", db_options);
         db_options.addOption([]const u8, "db_uri", db_uri);
 
-        exe.addIncludePath(include_dir);
+        // exe.addIncludePath(include_dir);
         exe.addPackagePath("postgres", "src/postgres.zig");
         exe.linkSystemLibrary("c");
         exe.linkSystemLibrary("pq");
@@ -52,14 +53,14 @@ pub fn build(b: *Builder) void {
     lib.addOptions("build_options", db_options);
     db_options.addOption([]const u8, "db_uri", db_uri);
 
-    lib.addIncludePath(include_dir);
-    lib.linkSystemLibrary("c");
-    lib.linkSystemLibrary("pq");
+    // lib.addIncludePath(include_dir);
+    // lib.linkSystemLibrary("c");
+    // lib.linkSystemLibrary("pq");
 
     const tests = b.addTest("tests.zig");
     tests.setBuildMode(mode);
     tests.setTarget(target);
-    tests.addIncludePath(include_dir);
+    // tests.addIncludePath(include_dir);
     tests.linkSystemLibrary("c");
     tests.linkSystemLibrary("pq");
     tests.addPackagePath("postgres", "src/postgres.zig");

@@ -48,8 +48,12 @@ pub fn main() !void {
         db.deinit();
     }
 
+    const if_exists = "SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'root'";
+    const if_exists_res = try db.exec(if_exists);
+    std.debug.print("res: {any}", .{if_exists_res.res});
+
     const schema =
-        \\CREATE DATABASE IF NOT EXISTS root;
+        \\CREATE DATABASE IF EXISTS root;
         \\CREATE TABLE IF NOT EXISTS player (id INT, name TEXT, stats JSONB, cards STRING[]);
     ;
 

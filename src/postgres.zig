@@ -68,6 +68,7 @@ pub const Pg = struct {
                         //Set table name as first items struct name.
                         if (child_index == 0) {
                             const struct_name = @typeName(@TypeOf(child));
+                            std.debug.print(">>>> struct_name: {s}\n", .{struct_name});
                             _ = builder.table(helpers.toLowerCase(struct_name.len, struct_name)[0..]);
                         }
 
@@ -94,6 +95,7 @@ pub const Pg = struct {
                     const struct_name = @typeName(type_info.Pointer.child);
                     const is_extended = @hasDecl(type_info.Pointer.child, "onSave");
 
+                    std.debug.print(">>>> struct_name: {s}\n", .{struct_name});
                     _ = builder.table(helpers.toLowerCase(struct_name.len, struct_name)[0..]);
 
                     inline for (struct_info.fields) |field| {
@@ -114,7 +116,7 @@ pub const Pg = struct {
                 const struct_name = @typeName(@TypeOf(data));
                 const is_extended = @hasDecl(@TypeOf(data), "onSave");
 
-                _ = builder.table(helpers.toLowerCase(struct_name.len, struct_name)[0..]);
+                _ = builder.table(helpers.extWithoutDotLowerCase(struct_name.len, struct_name)[0..]);
                 inline for (struct_info.fields) |field| {
                     const field_type_info = @typeInfo(field.type);
                     const field_value = @field(data, field.name);

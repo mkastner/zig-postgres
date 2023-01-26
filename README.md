@@ -1,30 +1,22 @@
 # zig-postgres
 
-
 Light bindings around Postgres `libpq`
 
 This is tested with zig `0.8`
 
-
-
 Installing `libpg` on debian linux
-
 
 `sudo apt-get install libpq-dev`
 
+## How to install
 
+---
 
-## How to install 
-
------
-
-Add this repository as submodule 
+Add this repository as submodule
 
 `git submodule add git@github.com:tonis2/zig-postgres.git dependencies/zig-postgres`
 
-
 Add following code lines into your project `build.zig`
-
 
 This code adds the package and links required libraries.
 
@@ -34,20 +26,17 @@ This code adds the package and links required libraries.
     exe.linkSystemLibrary("libpq");
 ```
 
-Running examples or tests requires `db` url attribute, for example 
+Running examples or tests requires `db` url attribute, for example
 
 `zig build test -Ddb=postgresql://db_url`
 
 `zig build main -Ddb=postgresql://db_url`
 
 ## How to use
------
 
-
-
+---
 
 ### Connecting to database
-
 
 ```zig
     const Pg = @import("postgres").Pg;
@@ -64,16 +53,14 @@ Running examples or tests requires `db` url attribute, for example
 
 ```zig
    const schema =
-        \\CREATE DATABASE IF NOT EXISTS root;
+        \\CREATE DATABASE root;
         \\CREATE TABLE IF NOT EXISTS users (id INT, name TEXT, age INT);
     ;
 
     _ = try db.exec(schema);
 ```
 
-
 ### Inserting data
-
 
 Be mindful that this query, uses `struct name` as lowercase letters for `table` name.
 
@@ -97,7 +84,6 @@ Be mindful that this query, uses `struct name` as lowercase letters for `table` 
 
 ```
 
-
 ### Exec query with values
 
 ```zig
@@ -106,7 +92,6 @@ _ = try db.execValues("SELECT * FROM users WHERE name = {s}", .{"Charlie"});
 _ = try db.execValues("INSERT INTO users (id, name, age) VALUES ({d}, {s}, {d})", .{ 5, "Tom", 32 });
 
 ```
-
 
 ### Read query results
 
@@ -118,7 +103,6 @@ print("{d} \n", .{user.id});
 print("{s} \n", .{user.name});
 
 ```
-
 
 ```zig
 var results = try db.execValues("SELECT * FROM users WHERE age = {d}", .{25});
@@ -135,5 +119,4 @@ var user = result.parse(Users, null}).?;
 if(user) print("{s} \n", .{user.name});
 ```
 
-
-Many thanks for this [repository](https://github.com/aeronavery/zig-orm) 
+Many thanks for this [repository](https://github.com/aeronavery/zig-orm)

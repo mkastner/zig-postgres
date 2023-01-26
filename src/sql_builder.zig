@@ -31,6 +31,7 @@ pub const Builder = struct {
     }
 
     pub fn table(self: *Builder, table_name: []const u8) *Builder {
+        std.debug.print(">>>> table_name: {s}\n", .{table_name});
         self.table_name = table_name;
         return self;
     }
@@ -112,6 +113,7 @@ pub const Builder = struct {
     }
 
     pub fn end(self: *Builder) !void {
+        // std.debug.print("table_name: {s}", .{self.table_name});
         switch (self.build_type) {
             .Insert => {
                 _ = try self.buffer.writer().write("INSERT INTO ");
