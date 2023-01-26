@@ -24,8 +24,7 @@ This code adds the package and links required libraries.
 
 ```zig
     exe.addPackage(.{ .name = "postgres", .path = "/dependencies/zig-postgres/src/postgres.zig" });
-    exe.linkSystemLibrary("c");
-    exe.linkSystemLibrary("libpq");
+    exe.linkSystemLibrary("pq");
 ```
 
 Running examples or tests requires `db` url attribute, for example
