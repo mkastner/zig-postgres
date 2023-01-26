@@ -23,14 +23,14 @@ pub fn build(b: *Builder) void {
         "Specify the database url",
     ) orelse "postgresql://postgresql:postgresql@localhost:5432";
 
+    const db_options = b.addOptions();
+    db_options.addOption([]const u8, "db_uri", db_uri);
+
     inline for (examples) |example| {
         const exe = b.addExecutable(example, "examples/" ++ example ++ ".zig");
         exe.setTarget(target);
         exe.setBuildMode(mode);
-        const db_options = b.addOptions();
         exe.addOptions("build_options", db_options);
-        db_options.addOption([]const u8, "db_uri", db_uri);
-
         exe.addPackagePath("postgres", "src/postgres.zig");
         exe.linkSystemLibrary("pq");
 
@@ -46,9 +46,7 @@ pub fn build(b: *Builder) void {
     const lib = b.addStaticLibrary("zig-postgres", "src/postgres.zig");
     lib.setTarget(target);
     lib.setBuildMode(mode);
-    const db_options = b.addOptions();
     lib.addOptions("build_options", db_options);
-    db_options.addOption([]const u8, "db_uri", db_uri);
 
     lib.linkSystemLibrary("pq");
 
