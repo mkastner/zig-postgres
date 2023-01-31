@@ -21,7 +21,7 @@ pub fn build(b: *Builder) void {
         []const u8,
         "db",
         "Specify the database url",
-    ) orelse "postgresql://postgresql:postgresql@localhost:5432";
+    ) orelse "postgresql://postgresql:postgresql@localhost:5432/mydb";
 
     const db_options = b.addOptions();
     db_options.addOption([]const u8, "db_uri", db_uri);
