@@ -4,7 +4,7 @@ Light bindings around Postgres `libpq`
 
 This is tested with zig `0.8`
 
-Installing `libpg` on debian linux
+Installing `libpq` on debian linux
 
 `sudo apt-get install libpq-dev`
 
@@ -29,9 +29,7 @@ This code adds the package and links required libraries.
 
 Running examples or tests requires `db` url attribute, for example
 
-`zig build test -Ddb=postgresql://db_url`
-
-`zig build main -Ddb=postgresql://db_url`
+`zig build test -Ddb=postgresql://db_url/mydb`
 
 ## How to use
 
@@ -47,7 +45,6 @@ Running examples or tests requires `db` url attribute, for example
     defer std.debug.assert(!gpa.deinit());
 
     var db = try Pg.connect(allocator, "postgresql://root@postgresURL:26257?sslmode=disable");
-
 ```
 
 ### Executing SQL
