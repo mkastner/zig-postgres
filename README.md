@@ -33,6 +33,8 @@ Running examples or tests requires `db` url attribute, for example
 
 ## How to use
 
+Example of importing and using https://github.com/rofrol/zig-postgres-tryout
+
 ---
 
 ### Connecting to database
