@@ -10,6 +10,10 @@ Installing `libpq` on debian linux
 
 There is also native zig client in pre-alpha status https://github.com/star-tek-mb/pgz
 
+## Example
+
+Example of importing and using https://github.com/rofrol/zig-postgres-tryout
+
 ## How to install
 
 ---
@@ -32,10 +36,6 @@ Running examples or tests requires `db` url attribute, for example
 `zig build test -Ddb=postgresql://db_url/mydb`
 
 ## How to use
-
-You need to create some database first. For exaple `mydb`.
-
-Example of importing and using https://github.com/rofrol/zig-postgres-tryout
 
 ---
 
