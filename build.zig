@@ -18,15 +18,14 @@ pub fn build(b: *Builder) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     b.addSearchPrefix(include_dir);
-    const postgres_module = b.createModule(.{
-        .source_file = .{ .path = "src/postgres.zig" },
-    });
 
     // Export zig-postgres as a module
     b.addModule(.{
         .name = package_name,
         .source_file = .{ .path = package_path },
     });
+
+    const postgres_module = b.modules.get(package_name) orelse unreachable;
 
     const db_uri = b.option(
         []const u8,
