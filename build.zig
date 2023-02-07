@@ -1,7 +1,9 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const Builder = std.build.Builder;
-const OptionsStep = std.build.OptionsStep;
+
+const package_name = "postgres";
+const package_path = "src/postgres.zig";
 
 const examples = [2][]const u8{ "main", "custom_types" };
 
@@ -18,6 +20,12 @@ pub fn build(b: *Builder) void {
     b.addSearchPrefix(include_dir);
     const postgres_module = b.createModule(.{
         .source_file = .{ .path = "src/postgres.zig" },
+    });
+
+    // Export zig-postgres as a module
+    b.addModule(.{
+        .name = package_name,
+        .source_file = .{ .path = package_path },
     });
 
     const db_uri = b.option(
@@ -50,7 +58,7 @@ pub fn build(b: *Builder) void {
     }
 
     const lib = b.addStaticLibrary(.{
-        .name = "zig-postgres",
+        .name = package_name,
         .root_source_file = .{ .path = "src/postgres.zig" },
         .target = target,
         .optimize = optimize,
