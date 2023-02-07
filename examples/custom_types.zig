@@ -53,8 +53,8 @@ pub fn main() !void {
     std.debug.print("res: {any}", .{if_exists_res.res});
 
     const schema =
-        \\CREATE DATABASE IF EXISTS root;
-        \\CREATE TABLE IF NOT EXISTS player (id INT, name TEXT, stats JSONB, cards STRING[]);
+        // \\CREATE DATABASE IF EXISTS root;
+        \\CREATE TABLE IF NOT EXISTS player (id INT, name TEXT, stats JSONB, cards TEXT[]);
     ;
 
     _ = try db.exec(schema);
