@@ -12,7 +12,7 @@ There is also native zig client in pre-alpha status https://github.com/star-tek-
 
 ## Example
 
-Example of importing and using https://github.com/rofrol/zig-postgres-tryout
+Example of importing and using https://github.com/zig-postgres/zig-postgres-template
 
 ## How to install
 
