@@ -10,26 +10,11 @@ Installing `libpq` on debian linux
 
 There is also native zig client in pre-alpha status https://github.com/star-tek-mb/pgz
 
-## Example
+## Import this module
 
 Example of importing and using https://github.com/zig-postgres/zig-postgres-template
 
-## How to install
-
----
-
-Add this repository as submodule
-
-`git submodule add git@github.com:tonis2/zig-postgres.git dependencies/zig-postgres`
-
-Add following code lines into your project `build.zig`
-
-This code adds the package and links required libraries.
-
-```zig
-    exe.addPackage(.{ .name = "postgres", .path = "/dependencies/zig-postgres/src/postgres.zig" });
-    exe.linkSystemLibrary("pq");
-```
+## Run test
 
 Running examples or tests requires `db` url attribute, for example
 
