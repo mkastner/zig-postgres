@@ -14,8 +14,11 @@ const include_dir = switch (builtin.target.os.tag) {
 
 pub fn build(b: *Builder) void {
     const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
+    const optimize = b.standardOptimizeOption(.{});
     b.addSearchPrefix(include_dir);
+    const postgres_module = b.createModule(.{
+        .source_file = .{ .path = "src/postgres.zig" },
+    });
 
     const db_uri = b.option(
         []const u8,
@@ -27,11 +30,14 @@ pub fn build(b: *Builder) void {
     db_options.addOption([]const u8, "db_uri", db_uri);
 
     inline for (examples) |example| {
-        const exe = b.addExecutable(example, "examples/" ++ example ++ ".zig");
-        exe.setTarget(target);
-        exe.setBuildMode(mode);
+        const exe = b.addExecutable(.{
+            .name = example,
+            .root_source_file = .{ .path = "examples/" ++ example ++ ".zig" },
+            .target = target,
+            .optimize = optimize,
+        });
         exe.addOptions("build_options", db_options);
-        exe.addPackagePath("postgres", "src/postgres.zig");
+        exe.addModule("postgres", postgres_module);
         exe.linkSystemLibrary("pq");
 
         exe.install();
@@ -43,18 +49,23 @@ pub fn build(b: *Builder) void {
         run_step.dependOn(&run_cmd.step);
     }
 
-    const lib = b.addStaticLibrary("zig-postgres", "src/postgres.zig");
-    lib.setTarget(target);
-    lib.setBuildMode(mode);
+    const lib = b.addStaticLibrary(.{
+        .name = "zig-postgres",
+        .root_source_file = .{ .path = "src/postgres.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     lib.addOptions("build_options", db_options);
 
     lib.linkSystemLibrary("pq");
 
-    const tests = b.addTest("tests.zig");
-    tests.setBuildMode(mode);
-    tests.setTarget(target);
+    const tests = b.addTest(.{
+        .root_source_file = .{ .path = "tests.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     tests.linkSystemLibrary("pq");
-    tests.addPackagePath("postgres", "src/postgres.zig");
+    tests.addModule("postgres", postgres_module);
     tests.addOptions("build_options", db_options);
 
     const test_step = b.step("test", "Run tests");
