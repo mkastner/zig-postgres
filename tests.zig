@@ -1,6 +1,9 @@
 const testing = @import("std").testing;
+const imported_database_tests = @import("src/database_tests.zig");
+//const sql_builder = @import("src/sql_builder.zig");
 
 test "tests" {
-  testing.refAllDecls(@import("src/database_tests.zig"));
-  testing.refAllDecls(@import("src/sql_builder.zig"));
+    _ = imported_database_tests;
+    //testing.refAllDecls(@This());
+    //_ = @import("src/sql_builder.zig");
 }

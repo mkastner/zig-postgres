@@ -3,11 +3,11 @@ const std = @import("std");
 const print = std.log.info;
 const ArrayList = std.ArrayList;
 const Allocator = std.mem.Allocator;
-const helpers = @import("./helpers.zig");
+const helpers = @import("helpers.zig");
 
-const Definitions = @import("./definitions.zig");
+const Definitions = @import("definitions.zig");
 const Error = Definitions.Error;
-const FieldInfo = @import("./result.zig").FieldInfo;
+const FieldInfo = @import("result.zig").FieldInfo;
 
 pub const SQL = enum { Insert, Select, Delete, Update };
 
@@ -73,7 +73,7 @@ pub const Builder = struct {
 
     pub fn addStringArray(self: *Builder, values: [][]const u8) !void {
         _ = try self.buffer.writer().write("ARRAY[");
-        for (values) |entry, i| _ = {
+        for (values, 0..) |entry, i| _ = {
             _ = try self.buffer.writer().write(try std.fmt.allocPrint(self.allocator, "'{s}'", .{entry}));
             if (i < values.len - 1) _ = try self.buffer.writer().write(",");
         };
@@ -117,7 +117,7 @@ pub const Builder = struct {
                 _ = try self.buffer.writer().write("INSERT INTO ");
                 _ = try self.buffer.writer().write(self.table_name);
 
-                for (self.columns.items) |column, index| {
+                for (self.columns.items, 0..) |column, index| {
                     if (index == 0) _ = try self.buffer.writer().write(" (");
                     if (index == self.columns.items.len - 1) {
                         _ = try self.buffer.writer().write(column);
@@ -129,7 +129,7 @@ pub const Builder = struct {
                 }
                 _ = try self.buffer.writer().write("VALUES");
 
-                for (self.values.items) |value, index| {
+                for (self.values.items, 0..) |value, index| {
                     const columns_mod = index % self.columns.items.len;
                     const final_value = index == self.values.items.len - 1;
 
@@ -167,7 +167,7 @@ pub const Builder = struct {
                 _ = try self.buffer.writer().write(self.table_name);
                 _ = try self.buffer.writer().write(" SET ");
 
-                for (self.columns.items) |column, index| {
+                for (self.columns.items, 0..) |column, index| {
                     const final_value = index == self.columns.items.len - 1;
 
                     _ = try self.buffer.writer().write(column);
@@ -206,7 +206,7 @@ pub const Builder = struct {
         comptime var values_info = @typeInfo(@TypeOf(values));
         comptime var temp_fields: [values_info.Struct.fields.len]std.builtin.Type.StructField = undefined;
 
-        inline for (values_info.Struct.fields) |field, index| {
+        inline for (values_info.Struct.fields, 0..) |field, index| {
             switch (field.type) {
                 i16, i32, u8, u16, u32, usize, comptime_int => {
                     temp_fields[index] = std.builtin.Type.StructField{
@@ -237,7 +237,7 @@ pub const Builder = struct {
 
             switch (field.type) {
                 comptime_int => {
-                    @field(parsed_values, field.name) = @intCast(i32, value);
+                    @field(parsed_values, field.name) = @as(i32, @intCast(value));
                     return;
                 },
                 i16, i32, u8, u16, u32, usize => {

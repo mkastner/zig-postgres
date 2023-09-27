@@ -25,7 +25,7 @@ pub fn parseArray(self: *const Self, value: []const u8, break_point: []const u8,
     var buffer = std.ArrayList([]const u8).init(allocator);
 
     var stop_point: usize = try std.math.divCeil(usize, break_point.len, 2);
-    for (value) |_, index| {
+    for (value, 0..) |_, index| {
         const one_step = index + break_point.len;
         if (one_step == value.len and stop_point < index) {
             try buffer.append(value[stop_point..index]);

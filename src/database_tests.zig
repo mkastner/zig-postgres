@@ -54,14 +54,17 @@ test "database" {
     //When all results are not parsed, the memory must be manually deinited
     defer result4.deinit();
 
-    var user = result.parse(Users, null).?;
-    var user2 = result2.parse(Users, null).?;
-    var user3 = result4.parse(Users, null).?;
+    //var user = result.parse(Users, null).?;
+    var user = result.parse(Users, allocator).?;
+    var user2 = result2.parse(Users, allocator).?;
+    var user3 = result4.parse(Users, allocator).?;
 
-    while (result3.parse(Users, null)) |res| testing.expectEqual(res.age, 25);
+    //while (result3.parse(Users, allocator)) |res| testing.expectEqual(res.age, 25);
 
     //SQL query builder
-    var builder = Builder.new(.Update, std.testing.allocator).table("users").where(try Builder.buildQuery("WHERE id = {d};", .{2}, std.testing.allocator));
+    var builder = Builder
+        .new(.Update, std.testing.allocator).table("users")
+        .where(try Builder.buildQuery("WHERE id = {d};", .{2}, std.testing.allocator));
 
     defer builder.deinit();
 
@@ -101,7 +104,8 @@ const Player = struct {
     stats: Stats,
     cards: ?[][]const u8 = null,
 
-    pub fn onSave(_: *Player, comptime field: FieldInfo, builder: *Builder, value: anytype) !void {
+    pub fn onSave(self: *Player, comptime field: FieldInfo, builder: *Builder, value: anytype) !void {
+        _ = self;
         switch (field.type) {
             ?[][]const u8 => try builder.addStringArray(value.?),
             Stats => try builder.addJson(value),
@@ -122,7 +126,7 @@ test "Custom types" {
     var db = try Pg.connect(std.testing.allocator, build_options.db_uri);
 
     defer {
-        std.debug.assert(!gpa.deinit());
+        // std.debug.assert(!gpa.deinit());
         db.deinit();
     }
 

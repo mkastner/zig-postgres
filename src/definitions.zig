@@ -1,4 +1,4 @@
-const std = @import("std");
+// const std = @import("std");
 
 pub const Error = error{ ConnectionFailure, QueryFailure, NotConnected, NotImplemented, WrongType, EmptyResult };
 
@@ -23,5 +23,3 @@ pub const ColumnType = enum(usize) {
     Jsonb = 3820,
     Uuid = 2950,
 };
-
-

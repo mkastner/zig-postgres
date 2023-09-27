@@ -1,15 +1,15 @@
 const std = @import("std");
 
 const print = std.debug.print;
-const c = @import("./postgres.zig").c;
-const helpers = @import("./helpers.zig");
-const Parser = @import("./postgres.zig").Parser;
+const c = @import("postgres.zig").c;
+const helpers = @import("helpers.zig");
+const Parser = @import("postgres.zig").Parser;
 
-const ColumnType = @import("./definitions.zig").ColumnType;
+const ColumnType = @import("definitions.zig").ColumnType;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 
-const Definitions = @import("./definitions.zig");
+const Definitions = @import("definitions.zig");
 const Error = Definitions.Error;
 
 pub const FieldInfo = struct {
@@ -24,8 +24,10 @@ pub const Result = struct {
     active_row: usize = 0,
 
     pub fn new(result: *c.PGresult) Result {
-        const rows = @intCast(usize, c.PQntuples(result));
-        const columns = @intCast(usize, c.PQnfields(result));
+        //const rows = @as(usize, @intCast(c.PQntuples(result)));
+        const rows = @as(usize, @intCast(c.PQntuples(result)));
+
+        const columns = @as(usize, @intCast(c.PQnfields(result)));
 
         if (rows == 0) {
             c.PQclear(result);
@@ -48,17 +50,17 @@ pub const Result = struct {
     }
 
     fn columnName(self: Result, column_number: usize) []const u8 {
-        const value = c.PQfname(self.res.?, @intCast(c_int, column_number));
+        const value = c.PQfname(self.res.?, @as(c_int, @intCast(column_number)));
         return @as([*c]const u8, value)[0..std.mem.len(value)];
     }
 
     fn getType(self: Result, column_number: usize) ColumnType {
-        var oid = @intCast(usize, c.PQftype(self.res.?, @intCast(c_int, column_number)));
+        var oid = @as(usize, @intCast(c.PQftype(self.res.?, @as(c_int, @intCast(column_number)))));
         return std.meta.intToEnum(ColumnType, oid) catch return ColumnType.Unknown;
     }
 
     fn getValue(self: Result, row_number: usize, column_number: usize) []const u8 {
-        const value = c.PQgetvalue(self.res.?, @intCast(c_int, row_number), @intCast(c_int, column_number));
+        const value = c.PQgetvalue(self.res.?, @as(c_int, @intCast(row_number)), @as(c_int, @intCast(column_number)));
         return @as([*c]const u8, value)[0..std.mem.len(value)];
     }
 

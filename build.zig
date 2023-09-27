@@ -1,6 +1,5 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const Builder = std.build.Builder;
 
 const package_name = "postgres";
 const package_path = "src/postgres.zig";
@@ -10,20 +9,24 @@ const examples = [2][]const u8{ "main", "custom_types" };
 const include_dir = switch (builtin.target.os.tag) {
     .linux => "/usr/include",
     .windows => "C:\\Program Files\\PostgreSQL\\14\\include",
-    .macos => "/opt/homebrew/opt/libpq",
+    //.macos => "/opt/homebrew/opt/libpq",
+    .freebsd => "/usr/local/include",
+    .macos => "/usr/local/opt/libpq",
     else => "/usr/include",
 };
 
-pub fn build(b: *Builder) void {
+pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     b.addSearchPrefix(include_dir);
 
+    _ =
+        b.addModule("definitions", .{ .source_file = .{ .path = "definitions.zig" } });
+
     // Export zig-postgres as a module
-    b.addModule(.{
-        .name = package_name,
-        .source_file = .{ .path = package_path },
-    });
+    _ = b.addModule(package_name, .{ .source_file = .{ .path = package_path } });
+
+    //exe.addModule("definitions", definitions_module);
 
     const postgres_module = b.modules.get(package_name) orelse unreachable;
 
@@ -43,13 +46,32 @@ pub fn build(b: *Builder) void {
             .target = target,
             .optimize = optimize,
         });
+
+        const result_module = b.addModule("result", .{ .source_file = .{ .path = "result.zig" } });
+        exe.addModule("result", result_module);
+
+        const sql_builder_module = b.addModule("sql_builder", .{ .source_file = .{ .path = "sql_builder.zig" } });
+        exe.addModule("sql_builder", sql_builder_module);
+
+        const helpers_module = b.addModule("helpers", .{ .source_file = .{ .path = "helpers.zig" } });
+        exe.addModule("helpers", helpers_module);
+
+        const inner_definitions_module = b.addModule("definitions", .{ .source_file = .{ .path = "definitions.zig" } });
+        exe.addModule("definitions", inner_definitions_module);
+
         exe.addOptions("build_options", db_options);
+        // exe.addModule("postgres", postgres_module);
         exe.addModule("postgres", postgres_module);
+
         exe.linkSystemLibrary("pq");
 
-        exe.install();
+        // depreacted
+        //exe.install();
+        // instead
+        b.installArtifact(exe);
 
-        const run_cmd = exe.run();
+        //const run_cmd = exe.run();
+        const run_cmd = b.addRunArtifact(exe);
         run_cmd.step.dependOn(b.getInstallStep());
 
         const run_step = b.step(example, "Run the app");

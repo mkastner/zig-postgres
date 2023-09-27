@@ -3,7 +3,7 @@ const Allocator = std.mem.Allocator;
 
 pub fn toLowerCase(comptime size: usize, string: *const [size]u8) [size]u8 {
     var buffer: [size]u8 = undefined;
-    for (string) |char, index| {
+    for (string, 0..) |char, index| {
         buffer[index] = std.ascii.toLower(char);
     }
     return buffer;
