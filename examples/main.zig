@@ -21,10 +21,12 @@ const Users = struct {
 };
 
 pub fn main() !void {
+    std.debug.print("\nRunning ...\n", .{});
+
     var db = try Pg.connect(allocator, build_options.db_uri);
 
     defer {
-        std.debug.assert(!gpa.deinit());
+        std.debug.assert(.ok == gpa.deinit());
         db.deinit();
     }
 
@@ -48,7 +50,7 @@ pub fn main() !void {
     var result2 = try db.execValues("SELECT * FROM users WHERE age > {d};", .{20});
 
     while (result2.parse(Users, allocator)) |value| {
-        print("{s} \n", .{value.name});
+        print("user: {s} \n", .{value.name});
     }
 
     _ = try db.exec("DROP TABLE users");
