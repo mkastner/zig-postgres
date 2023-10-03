@@ -2,6 +2,7 @@ const std = @import("std");
 const print = std.debug.print;
 const build_options = @import("build_options");
 
+const SchemaAnalyzer = @import("schema_analyzer");
 const Postgres = @import("postgres");
 const Pg = Postgres.Pg;
 const Result = Postgres.Result;
@@ -24,6 +25,8 @@ pub fn main() !void {
     std.debug.print("\nRunning ...\n", .{});
 
     var db = try Pg.connect(allocator, build_options.db_uri);
+
+    SchemaAnalyzer.inspect(db);
 
     defer {
         std.debug.assert(.ok == gpa.deinit());

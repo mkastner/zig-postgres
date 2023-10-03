@@ -49,35 +49,19 @@ pub fn build(b: *std.Build) void {
 
     _ = b.addModule("definitions", .{ .source_file = .{ .path = "src/definitions.zig" } });
 
-    // Export zig-postgres as a module
     _ = b.addModule(package_name, .{ .source_file = .{ .path = package_path } });
-
-    //exe.addModule("definitions", definitions_module);
 
     const allocator = std.heap.page_allocator;
 
     const postgres_module = b.modules.get(package_name) orelse unreachable;
-    // const env = try getEnvVar(allocator, "RUNTIME_ENV"[0..]);
     const env = getEnvVar(allocator, "RUNTIME_ENV"[0..]) catch |err| {
         std.debug.print("Error getting environment variable: {}\n", .{err});
         return;
     };
     defer allocator.free(env);
 
-    // const actual_host = host catch |err| {
-    //  std.debug.print("Error: {}\n", .{err});
-    //  return;
-    // };
-
-    //const capitalEnv = toUppercaseUtf8(allocator, env) catch |err| {
-    //    std.debug.print("Error: {}\n", .{err});
-    //    return;
-    //};
-
     var buf: [1024]u8 = undefined;
     const capital_env = std.ascii.upperString(buf[0..], env);
-
-    //defer allocator.free(capital_env);
 
     const host_env = concat(allocator, "DB_ZIGTEST_HOST_"[0..], capital_env[0..]) catch |err| {
         std.debug.print("Error: {}\n", .{err});
@@ -89,7 +73,7 @@ pub fn build(b: *std.Build) void {
         std.debug.print("Error: {}\n", .{err});
         return;
     };
-    // defer allocator.free(database);
+
     const user_env = concat(allocator, "DB_ZIGTEST_USER_", capital_env) catch |err| {
         std.debug.print("Error: {}\n", .{err});
         return;
@@ -141,6 +125,13 @@ pub fn build(b: *std.Build) void {
     const db_options = b.addOptions();
     db_options.addOption([]const u8, "db_uri", db_uri);
 
+    const schema_analyzer_module = b.addModule("schema_analyzer", .{ .source_file = .{ .path = "src/schema_analyzer.zig" }, .dependencies = &.{.{ .name = "postgres", .module = postgres_module }} });
+
+    const result_module = b.addModule("result", .{ .source_file = .{ .path = "src/result.zig" } });
+    const sql_builder_module = b.addModule("sql_builder", .{ .source_file = .{ .path = "src/sql_builder.zig" } });
+    const helpers_module = b.addModule("helpers", .{ .source_file = .{ .path = "src/helpers.zig" } });
+    const inner_definitions_module = b.addModule("definitions", .{ .source_file = .{ .path = "src/definitions.zig" } });
+
     inline for (examples) |example| {
         const exe = b.addExecutable(.{
             .name = example,
@@ -148,22 +139,19 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
         });
+        exe.addModule("postgres", postgres_module);
 
-        const result_module = b.addModule("result", .{ .source_file = .{ .path = "src/result.zig" } });
+        exe.addModule("schema_analyzer", schema_analyzer_module);
+
         exe.addModule("result", result_module);
 
-        const sql_builder_module = b.addModule("sql_builder", .{ .source_file = .{ .path = "src/sql_builder.zig" } });
         exe.addModule("sql_builder", sql_builder_module);
 
-        const helpers_module = b.addModule("helpers", .{ .source_file = .{ .path = "src/helpers.zig" } });
         exe.addModule("helpers", helpers_module);
 
-        const inner_definitions_module = b.addModule("definitions", .{ .source_file = .{ .path = "src/definitions.zig" } });
         exe.addModule("definitions", inner_definitions_module);
 
         exe.addOptions("build_options", db_options);
-        // exe.addModule("postgres", postgres_module);
-        exe.addModule("postgres", postgres_module);
 
         exe.linkSystemLibrary("pq");
 
@@ -172,7 +160,6 @@ pub fn build(b: *std.Build) void {
         // instead
         b.installArtifact(exe);
 
-        //const run_cmd = exe.run();
         const run_cmd = b.addRunArtifact(exe);
         run_cmd.step.dependOn(b.getInstallStep());
 

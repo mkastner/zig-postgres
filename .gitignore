@@ -1,3 +1,4 @@
 cockroach-data
+sh/
 zig-cache/
 zig-out/
