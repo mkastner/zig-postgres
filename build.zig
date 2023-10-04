@@ -47,9 +47,14 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     b.addSearchPrefix(include_dir);
 
-    _ = b.addModule("definitions", .{ .source_file = .{ .path = "src/definitions.zig" } });
+    const outer_definitions_module = b.addModule("definitions", .{ .source_file = .{ .path = "src/definitions.zig" } });
 
-    _ = b.addModule(package_name, .{ .source_file = .{ .path = package_path } });
+    _ = b.addModule(package_name, .{
+        .source_file = .{ .path = package_path },
+        .dependencies = &.{
+            .{ .name = "definitions", .module = outer_definitions_module },
+        },
+    });
 
     const allocator = std.heap.page_allocator;
 
@@ -125,12 +130,19 @@ pub fn build(b: *std.Build) void {
     const db_options = b.addOptions();
     db_options.addOption([]const u8, "db_uri", db_uri);
 
-    const schema_analyzer_module = b.addModule("schema_analyzer", .{ .source_file = .{ .path = "src/schema_analyzer.zig" }, .dependencies = &.{.{ .name = "postgres", .module = postgres_module }} });
+    //const inner_definitions_module = b.addModule("definitions", .{ .source_file = .{ .path = "src/definitions.zig" } });
 
-    const result_module = b.addModule("result", .{ .source_file = .{ .path = "src/result.zig" } });
-    const sql_builder_module = b.addModule("sql_builder", .{ .source_file = .{ .path = "src/sql_builder.zig" } });
+    const sql_builder_module = b.addModule("sql_builder", .{ .source_file = .{ .path = "src/sql_builder.zig" }, .dependencies = &.{
+        .{ .name = "definitions", .module = outer_definitions_module },
+    } });
     const helpers_module = b.addModule("helpers", .{ .source_file = .{ .path = "src/helpers.zig" } });
-    const inner_definitions_module = b.addModule("definitions", .{ .source_file = .{ .path = "src/definitions.zig" } });
+    const result_module = b.addModule("result", .{ .source_file = .{ .path = "src/result.zig" }, .dependencies = &.{
+        .{ .name = "definitions", .module = outer_definitions_module },
+    } });
+    const schema_analyzer_module = b.addModule("schema_analyzer", .{ .source_file = .{ .path = "src/schema_analyzer.zig" }, .dependencies = &.{
+        .{ .name = "postgres", .module = postgres_module },
+        .{ .name = "definitions", .module = outer_definitions_module },
+    } });
 
     inline for (examples) |example| {
         const exe = b.addExecutable(.{
@@ -149,7 +161,7 @@ pub fn build(b: *std.Build) void {
 
         exe.addModule("helpers", helpers_module);
 
-        exe.addModule("definitions", inner_definitions_module);
+        //exe.addModule("definitions", inner_definitions_module);
 
         exe.addOptions("build_options", db_options);
 

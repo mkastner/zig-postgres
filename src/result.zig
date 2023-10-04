@@ -2,14 +2,14 @@ const std = @import("std");
 
 const print = std.debug.print;
 const c = @import("postgres.zig").c;
-const helpers = @import("helpers.zig");
-const Parser = @import("postgres.zig").Parser;
+const helpers = @import("helpers");
+const Parser = @import("postgres").Parser;
 
-const ColumnType = @import("definitions.zig").ColumnType;
+const ColumnType = @import("definitions").ColumnType;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 
-const Definitions = @import("definitions.zig");
+const Definitions = @import("definitions");
 const Error = Definitions.Error;
 
 pub const FieldInfo = struct {

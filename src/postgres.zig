@@ -9,7 +9,7 @@ pub const Builder = @import("sql_builder.zig").Builder;
 pub const Parser = @import("parser");
 
 const helpers = @import("helpers.zig");
-const Definitions = @import("definitions.zig");
+const Definitions = @import("definitions");
 const Error = Definitions.Error;
 
 const Allocator = std.mem.Allocator;
@@ -154,6 +154,8 @@ pub const Pg = struct {
             c.PQclear(res);
             return Error.QueryFailure;
         }
+        std.debug.print("response_code {}\n", .{response_code});
+        std.debug.print("res           {?}\n", .{res});
 
         if (res) |result| {
             return Result.new(result);

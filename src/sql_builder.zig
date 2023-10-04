@@ -5,7 +5,7 @@ const ArrayList = std.ArrayList;
 const Allocator = std.mem.Allocator;
 const helpers = @import("helpers.zig");
 
-const Definitions = @import("definitions.zig");
+const Definitions = @import("definitions");
 const Error = Definitions.Error;
 const FieldInfo = @import("result.zig").FieldInfo;
 

@@ -25,36 +25,30 @@ pub fn main() !void {
     std.debug.print("\nRunning ...\n", .{});
 
     var db = try Pg.connect(allocator, build_options.db_uri);
+    var result = try db.exec("SELECT schemaname, tablename FROM pg_tables WHERE NOT (schemaname LIKE 'pg_%' OR schemaname = 'information_schema')");
+    //std.debug.print("Type of result: {*}\n", .{result.res});
 
-    SchemaAnalyzer.inspect(db);
+    //std.debug.print("result {}         \n", .{result.res});
+    //std.debug.print("result columns {?}\n", .{result.columns});
+    std.debug.print("result rows    {?}\n", .{result.rows});
+
+    //const analyzer_result = SchemaAnalyzer.inspect(db);
+    //if (analyzer_result) |value| {
+    //    std.debug.print("Success: {}\n", .{value});
+    //} else |err| {
+    //    std.debug.print("Could not perform schema inspection {}", err);
+    //}
 
     defer {
         std.debug.assert(.ok == gpa.deinit());
         db.deinit();
     }
 
-    const schema =
-        // \\CREATE DATABASE root;
-        \\CREATE TABLE IF NOT EXISTS users (id INT, name TEXT, age INT);
-    ;
+    //var result2 = try db.execValues("SELECT * FROM users WHERE id > {d};", .{20});
 
-    _ = try db.exec(schema);
+    //while (result2.parse(Users, allocator)) |value| {
+    //    print("user: {s} \n", .{value.id});
+    //}
 
-    _ = try db.insert(Users{ .id = 1, .name = "Charlie", .age = 20 });
-    _ = try db.insert(Users{ .id = 2, .name = "Steve", .age = 25 });
-    _ = try db.insert(Users{ .id = 3, .name = "Tom", .age = 25 });
-
-    var result = try db.execValues("SELECT * FROM users WHERE name = {s};", .{"Charlie"});
-
-    var user = result.parse(Users, allocator);
-
-    if (user) |value| print("{s} \n", .{value.name});
-
-    var result2 = try db.execValues("SELECT * FROM users WHERE age > {d};", .{20});
-
-    while (result2.parse(Users, allocator)) |value| {
-        print("user: {s} \n", .{value.name});
-    }
-
-    _ = try db.exec("DROP TABLE users");
+    // _ = try db.exec("DROP TABLE users");
 }
