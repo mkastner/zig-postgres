@@ -131,17 +131,25 @@ pub fn build(b: *std.Build) void {
     db_options.addOption([]const u8, "db_uri", db_uri);
 
     //const inner_definitions_module = b.addModule("definitions", .{ .source_file = .{ .path = "src/definitions.zig" } });
+    const result_module = b.addModule("result", .{ .source_file = .{ .path = "src/result.zig" }, .dependencies = &.{
+        .{ .name = "definitions", .module = outer_definitions_module },
+    } });
+
+    const schema_utils_module = b.addModule("schema_utils", .{ .source_file = .{ .path = "src/schema_utils.zig" }, .dependencies = &.{
+        .{ .name = "result", .module = result_module },
+        .{ .name = "definitions", .module = outer_definitions_module },
+    } });
 
     const sql_builder_module = b.addModule("sql_builder", .{ .source_file = .{ .path = "src/sql_builder.zig" }, .dependencies = &.{
         .{ .name = "definitions", .module = outer_definitions_module },
     } });
-    const helpers_module = b.addModule("helpers", .{ .source_file = .{ .path = "src/helpers.zig" } });
-    const result_module = b.addModule("result", .{ .source_file = .{ .path = "src/result.zig" }, .dependencies = &.{
-        .{ .name = "definitions", .module = outer_definitions_module },
-    } });
+
+    const helpers_module = b.addModule("helpers", .{ .source_file = .{ .path = "src/helpers.zig" }, .dependencies = &.{.{ .name = "definitions", .module = outer_definitions_module }} });
+
     const schema_analyzer_module = b.addModule("schema_analyzer", .{ .source_file = .{ .path = "src/schema_analyzer.zig" }, .dependencies = &.{
         .{ .name = "postgres", .module = postgres_module },
         .{ .name = "definitions", .module = outer_definitions_module },
+        .{ .name = "schema_utils", .module = schema_utils_module },
     } });
 
     inline for (examples) |example| {

@@ -25,14 +25,15 @@ pub fn main() !void {
     std.debug.print("\nRunning ...\n", .{});
 
     var db = try Pg.connect(allocator, build_options.db_uri);
-    var result = try db.exec("SELECT schemaname, tablename FROM pg_tables WHERE NOT (schemaname LIKE 'pg_%' OR schemaname = 'information_schema')");
     //std.debug.print("Type of result: {*}\n", .{result.res});
 
     //std.debug.print("result {}         \n", .{result.res});
     //std.debug.print("result columns {?}\n", .{result.columns});
-    std.debug.print("result rows    {?}\n", .{result.rows});
+    //std.debug.print("result rows    {?}\n", .{result.rows});
 
-    //const analyzer_result = SchemaAnalyzer.inspect(db);
+    SchemaAnalyzer.inspect(db) catch |err| {
+        std.debug.print("Could not perform schema inspection {}", .{err});
+    };
     //if (analyzer_result) |value| {
     //    std.debug.print("Success: {}\n", .{value});
     //} else |err| {

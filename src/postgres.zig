@@ -15,7 +15,7 @@ const Error = Definitions.Error;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 
-pub const Result = @import("result.zig").Result;
+//pub const Result = @import("result.zig").Result;
 pub const FieldInfo = @import("result.zig").FieldInfo;
 
 const print = std.debug.print;
@@ -47,130 +47,28 @@ pub const Pg = struct {
         };
     }
 
-    pub fn insert(self: Self, data: anytype) !Result {
-        var temp_memory = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-        var allocator = temp_memory.allocator();
-
-        var builder = Builder.new(.Insert, allocator);
-        const type_info = @typeInfo(@TypeOf(data));
-
-        defer {
-            builder.deinit();
-            temp_memory.deinit();
-        }
-
-        switch (type_info) {
-            .Pointer => {
-                const pointer_info = @typeInfo(type_info.Pointer.child);
-
-                if (pointer_info == .Array) {
-                    // For each item in inserted array
-                    for (data, 0..) |child, child_index| {
-                        //Set table name as first items struct name.
-                        if (child_index == 0) {
-                            const struct_name = @typeName(@TypeOf(child));
-                            _ = builder.table(helpers.toLowerCase(struct_name.len, struct_name)[0..]);
-                        }
-
-                        const struct_fields = @typeInfo(@TypeOf(child)).Struct.fields;
-                        const is_extended = @hasDecl(@TypeOf(child), "onSave");
-
-                        inline for (struct_fields) |field| {
-                            const field_type_info = @typeInfo(field.type);
-                            const field_value = @field(child, field.name);
-
-                            //Add first child struct keys as column value
-                            if (field_type_info == .Optional) {
-                                if (field_value != null) try builder.addColumn(field.name);
-                            } else if (child_index == 0) {
-                                try builder.addColumn(field.name);
-                            }
-                            builder.autoAdd(child, FieldInfo{ .name = field.name, .type = field.type }, field_value, is_extended) catch unreachable;
-                        }
-                    }
-                }
-                if (pointer_info == .Struct) {
-                    //Struct pointer
-                    const struct_info = @typeInfo(type_info.Pointer.child).Struct;
-                    const struct_name = @typeName(type_info.Pointer.child);
-                    const is_extended = @hasDecl(type_info.Pointer.child, "onSave");
-
-                    _ = builder.table(helpers.toLowerCase(struct_name.len, struct_name)[0..]);
-
-                    inline for (struct_info.fields) |field| {
-                        const field_type_info = @typeInfo(field.type);
-                        const field_value = @field(data, field.name);
-                        if (field_type_info == .Optional) {
-                            if (field_value != null) try builder.addColumn(field.name);
-                        } else {
-                            try builder.addColumn(field.name);
-                        }
-
-                        builder.autoAdd(data, FieldInfo{ .name = field.name, .type = field.type }, field_value, is_extended) catch unreachable;
-                    }
-                }
-            },
-            .Struct => {
-                const struct_info = @typeInfo(@TypeOf(data)).Struct;
-                const struct_name = @typeName(@TypeOf(data));
-                const is_extended = @hasDecl(@TypeOf(data), "onSave");
-
-                var buf: [1024]u8 = undefined;
-                const table_name = helpers.extWithoutDotLowerCase(struct_name.len, struct_name, &buf);
-                _ = builder.table(table_name);
-                inline for (struct_info.fields) |field| {
-                    const field_type_info = @typeInfo(field.type);
-                    const field_value = @field(data, field.name);
-
-                    if (field_type_info == .Optional) {
-                        if (field_value != null) try builder.addColumn(field.name);
-                    } else {
-                        try builder.addColumn(field.name);
-                    }
-
-                    builder.autoAdd(data, FieldInfo{ .name = field.name, .type = field.type }, field_value, is_extended) catch unreachable;
-                }
-            },
-            else => @compileError("type " ++ @typeName(@TypeOf(data)) ++ " not supported yet"),
-        }
-
-        // _ = builder.table("users");
-        try builder.end();
-        //Exec command
-        return try self.exec(builder.command());
-    }
-
-    pub fn exec(self: Self, query: []const u8) !Result {
+    pub fn rawExec(self: Self, query: []const u8) !?*c.PGresult {
         //var cstr_query = try std.cstr.addNullByte(self.allocator, query);
         var cstr_query = try self.allocator.dupeZ(u8, query);
         defer self.allocator.free(cstr_query);
 
-        var res: ?*c.PGresult = c.PQexec(self.connection, cstr_query);
+        var pgRes: ?*c.PGresult = c.PQexec(self.connection, cstr_query);
         // var response_code = @enumToInt(c.PQresultStatus(res));
-        var response_code = c.PQresultStatus(res);
+        var response_code = c.PQresultStatus(pgRes);
 
         if (response_code != c.PGRES_TUPLES_OK and response_code != c.PGRES_COMMAND_OK and response_code != c.PGRES_NONFATAL_ERROR) {
-            std.debug.print("Error {s}\n", .{c.PQresultErrorMessage(res)});
-            c.PQclear(res);
+            //std.debug.print("Error {s}\n", .{c.PQresultErrorMessage(pgRes)});
+            c.PQclear(pgRes);
             return Error.QueryFailure;
         }
-        std.debug.print("response_code {}\n", .{response_code});
-        std.debug.print("res           {?}\n", .{res});
+        //std.debug.print("response_code {}\n", .{response_code});
+        //std.debug.print("pgRes           {?}\n", .{pgRes});
 
-        if (res) |result| {
-            return Result.new(result);
+        if (pgRes) |pgResult| {
+            return pgResult;
         } else {
             return Error.QueryFailure;
         }
-    }
-
-    pub fn execValues(self: Self, comptime query: []const u8, values: anytype) !Result {
-        var temp_memory = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-        defer temp_memory.deinit();
-
-        const allocator = temp_memory.allocator();
-
-        return self.exec(try Builder.buildQuery(query, values, allocator));
     }
 
     pub fn deinit(self: *Self) void {

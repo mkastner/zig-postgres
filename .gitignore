@@ -2,3 +2,4 @@ cockroach-data
 sh/
 zig-cache/
 zig-out/
+*session*.vim

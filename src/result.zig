@@ -1,6 +1,5 @@
 const std = @import("std");
 
-const print = std.debug.print;
 const c = @import("postgres.zig").c;
 const helpers = @import("helpers");
 const Parser = @import("postgres").Parser;
