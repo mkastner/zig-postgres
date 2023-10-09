@@ -23,33 +23,20 @@ const Users = struct {
 
 pub fn main() !void {
     std.debug.print("\nRunning ...\n", .{});
-
-    var db = try Pg.connect(allocator, build_options.db_uri);
-    //std.debug.print("Type of result: {*}\n", .{result.res});
-
-    //std.debug.print("result {}         \n", .{result.res});
-    //std.debug.print("result columns {?}\n", .{result.columns});
-    //std.debug.print("result rows    {?}\n", .{result.rows});
-
-    SchemaAnalyzer.inspect(db) catch |err| {
-        std.debug.print("Could not perform schema inspection {}", .{err});
-    };
-    //if (analyzer_result) |value| {
-    //    std.debug.print("Success: {}\n", .{value});
-    //} else |err| {
-    //    std.debug.print("Could not perform schema inspection {}", err);
-    //}
-
     defer {
-        std.debug.assert(.ok == gpa.deinit());
-        db.deinit();
+        if (gpa.deinit() != .ok) {
+            std.debug.print("Error: Memory leaks detected.\n", .{});
+        }
     }
 
-    //var result2 = try db.execValues("SELECT * FROM users WHERE id > {d};", .{20});
+    var db = try Pg.connect(allocator, build_options.db_uri);
+    defer {
+        db.deinit() catch |err| {
+            std.debug.print("Error during db deinit: {}\n", .{err});
+        };
+    }
 
-    //while (result2.parse(Users, allocator)) |value| {
-    //    print("user: {s} \n", .{value.id});
-    //}
-
-    // _ = try db.exec("DROP TABLE users");
+    const dbFields = try SchemaAnalyzer.inspect(allocator, db);
+    defer dbFields.deinit();
+    // Assert at the end, after other resources have been cleaned up
 }

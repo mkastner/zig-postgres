@@ -71,7 +71,18 @@ pub const Pg = struct {
         }
     }
 
-    pub fn deinit(self: *Self) void {
+    //pub fn deinit(self: *Self) void {
+    //    c.PQfinish(self.connection);
+    //}
+    pub fn deinit(self: *Self) !void {
+        const errMsg =
+            c.PQerrorMessage(self.connection);
+        if (errMsg[0] != 0) { // Check if the error message string is non-empty
+            //const zigErrMsg = std.cstr.toSlice(errMsg); // Convert C string to Zig slice
+            const zigErrMsg = @as([*c]const u8, errMsg)[0..std.mem.len(errMsg)];
+            std.debug.print("Error: {s}\n", .{zigErrMsg}); // Print the error message
+            return error.ConnectionError; // Returning a custom error with the message
+        }
         c.PQfinish(self.connection);
     }
 };

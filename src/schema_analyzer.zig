@@ -10,9 +10,20 @@ pub const c = @cImport({
 // all tables in database
 // shop_development=# SELECT schemaname, tablename FROM pg_tables WHERE NOT (schemaname LIKE 'pg_%' OR schemaname = 'information_schema');
 
-pub fn inspect(db: Postgres.Pg) !void {
-    //const query = "SELECT schemaname, tablename  FROM pg_tables WHERE NOT (schemaname LIKE 'pg_%' OR schemaname = 'information_schema')";
+pub const DbField = struct {
+    db_name: []const u8,
+    field_name: []const u8,
+    type: []const u8,
+    //default_value: []const u8,
+    pub fn print(self: *const DbField) !void {
+        try std.json.stringify(self, .{}, std.io.getStdOut().writer());
+    }
+};
 
+pub fn inspect(
+    allocator: std.mem.Allocator,
+    db: Postgres.Pg,
+) !std.ArrayList(DbField) {
     const db_name_c = c.PQdb(db.connection);
 
     const db_name = @as([*c]const u8, db_name_c)[0..std.mem.len(db_name_c)];
@@ -26,7 +37,6 @@ pub fn inspect(db: Postgres.Pg) !void {
     const query = std.fmt.bufPrint(&query_buffer, query_template, .{db_name}) catch unreachable;
 
     std.debug.print("query : {s}\n", .{query});
-    //std.debug.print("query: {}\n", .{query});
 
     var result = db.rawExec(query) catch |err| {
         std.debug.print("Error: {}\n", .{err});
@@ -39,38 +49,23 @@ pub fn inspect(db: Postgres.Pg) !void {
     const cols = try schema_utils.getColumnCount(result);
     std.debug.print("cols:    {}\n", .{cols});
 
-    var col_idx: usize = 0;
-    while (col_idx < cols) : (col_idx += 1) {
-        const col_name = try schema_utils.getColumnName(result, col_idx);
-        //const col_type = try schema_utils.getColumnType(result, col_idx);
-        std.debug.print("col_name: {s} \n", .{col_name});
-        //std.debug.print("************* col_name: {s}\n", .{ col_name, col_type });
-        var row_idx: usize = 0;
-        while (row_idx < rows) : (row_idx += 1) {
-            const value = try schema_utils.getRowValue(result, row_idx, col_idx);
-            std.debug.print("{s} \t", .{value});
+    var dbFields = std.ArrayList(DbField).init(allocator);
+
+    var row_idx: usize = 0;
+    while (row_idx < rows) : (row_idx += 1) {
+        var col_idx: usize = 0;
+        while (col_idx < cols) : (col_idx += 1) {
+            const row_value = try schema_utils.getRowValue(result, row_idx, col_idx);
+            //std.debug.print("{d} {s} \t", .{ col_idx, row_value });
+            const dbField = DbField{ .db_name = db_name, .field_name = row_value, .type = row_value };
+            _ = try dbField.print();
+            dbFields.append(dbField) catch |err| {
+                std.debug.print("Error: {}\n", .{err});
+                return err;
+            };
         }
         std.debug.print("\n", .{});
     }
 
-    //const columns = schema_utils.getColumnCount(result);
-
-    //std.debug.print("Main result rows:    {any}\n", .{rows});
-    //std.debug.print("1 result columns: {}\n", .{columns});
-
-    //std.debug.print("1 result columns: {}\n", .{result.columns});
-    //std.debug.print("1 result rows:    {}\n", .{result.rows});
-
-    //var col_idx: usize = 0;
-    //while (col_idx < result.columns) : (col_idx += 1) {
-    //    const col_name = try schema_utils.getColumnName(*result, col_idx);
-    //    const col_type = try schema_utils.getColumnType(*result, col_idx);
-    //    var row_idx: usize = 0;
-    //    std.debug.print("result rows: {}\n", .{result.rows});
-    //    while (row_idx < result.rows) : (row_idx += 1) {
-    //        const value = try schema_utils.getColumnValue(*result, row_idx, col_idx);
-    //        std.debug.print("col_name: {}, col_type: {}, value: {}\n", .{ col_name, col_type, value });
-    //    }
-    //}
-
+    return dbFields;
 }
