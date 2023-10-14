@@ -5,7 +5,8 @@ const package_name = "postgres";
 const package_path = "src/postgres.zig";
 
 // const examples = [2][]const u8{ "main", "custom_types" };
-const examples = [1][]const u8{"main"};
+//const examples = [1][]const u8{"main"};
+const examples = [1][]const u8{"helpers"};
 
 const Error = error{
     EnvironmentVariableNotFound,
@@ -146,6 +147,15 @@ pub fn build(b: *std.Build) void {
 
     const helpers_module = b.addModule("helpers", .{ .source_file = .{ .path = "src/helpers.zig" }, .dependencies = &.{.{ .name = "definitions", .module = outer_definitions_module }} });
 
+    const routing_module = b.addModule("routing", .{
+        .source_file = .{ .path = "src/routing.zig" },
+        //.dependencies = &.{
+        //.{ .name = "postgres", .module = postgres_module },
+        //.{ .name = "definitions", .module = outer_definitions_module },
+        //.{ .name = "schema_utils", .module = schema_utils_module },
+        //}
+    });
+
     const schema_analyzer_module = b.addModule("schema_analyzer", .{ .source_file = .{ .path = "src/schema_analyzer.zig" }, .dependencies = &.{
         .{ .name = "postgres", .module = postgres_module },
         .{ .name = "definitions", .module = outer_definitions_module },
@@ -164,6 +174,8 @@ pub fn build(b: *std.Build) void {
         exe.addModule("schema_analyzer", schema_analyzer_module);
 
         exe.addModule("result", result_module);
+
+        exe.addModule("routing", routing_module);
 
         exe.addModule("sql_builder", sql_builder_module);
 
